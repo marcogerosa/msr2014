@@ -22,14 +22,15 @@ captionpos=b
 \title{How to Calculate Code Coverage Without Running Tests?\\
 A Heuristic Based on Static Code Analysis}
 
-\numberofauthors{2}
+% Como somos todos da mesma instituição, coloquei 1 aqui
+\numberofauthors{1}
 
 \author{
 \alignauthor
-Mauricio Aniche, Marco Aurélio Gerosa\\
+Mauricio F. Aniche, Gustavo A. Oliva, Marco A. Gerosa\\
 \affaddr{Institute of Mathematics and Statistics}\\
 \affaddr{University of São Paulo}\\
-\email{\{aniche,gerosa\}@ime.usp.br}
+\email{\{aniche,goliva,gerosa\}@ime.usp.br}
 }
 
 \maketitle
@@ -48,37 +49,22 @@ bla bla bla bla bla bla bla bla bla bla bla bla
 \section{Introduction}
 
 One advantage of studies that make use of mining software repository techniques
-is that it can be done on a large quantity of projects and data. This enormous 
-quantity of information allows researchers to validate a phenomenon with more
-property.
+is that they can leverage a large quantity of projects and data. This huge
+amount of information allows researchers to validate hypotheses with more property.
 
-Researchers can extract data from many different sources, such as issue trackers,
-source code repositories, mailing lists, and so on. Most of them are text-based, which
-means that the researcher should only find a way to extract and then process it. 
-However, source code is tricky: some metrics need the code to be compiled first.
-
-Compiling code is a complicated task. Each project has its own build process and
-required libraries. It is common that many of them are not available at the time the
-researcher has the source code.
+Researchers can extract data from many different sources, such as source code repositories (a.k.a. version control systems), issue trackers, mailing lists, and so on. Most of these repositories store textual information, which is easy to extract but hard to process. In the case of source code, a particular problem arises: some metrics require the code to be compiled first. And compiling code is a complicated task. Each project has its own build process and required libraries. Furthermore, it is common that many of these libraries are not available by the time researchers obtain the source code.
 
 An example of code metric that usually requires compiled code is code coverage. 
-The metric calculates the percentage of the production code that is covered by at least
-one unit test. Popular tools, such as Emma\footnote{http://emma.sourceforge.net/} or
+This metric calculates the percentage of production code that is covered by a set of unit tests. Popular tools, such as Emma\footnote{http://emma.sourceforge.net/} and
 Cobertura\footnote{http://cobertura.github.io/cobertura/}, instrument the code, execute
 the unit test suite, and then extract the information. As said before, when dealing
 with many different repositories, compiling and executing unit tests may not be
-an alternative.
+feasible.
 
-% TODO: colocar aqui as secoes
-To sort this problem out, we present an heuristic to calculate code coverage without
-compiling or even running the unit tests. In Section X, we discuss bla bla bla,
-bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla ,
-bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla 
-bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla\cite{bowman:reasoning}.
+% GUS Todo: Colocar labels nas seções e fazer o crossref aqui
+To sort this problem out, we conceived, implemented, and evaluated a heuristic to calculate code coverage without compiling the code first (i.e., without even running unit tests). In Section II, we introduce the concept of code coverage. In Section III, we present our heuristic. In Section IV, we describe the experiment design. In Section V, we present the results we obtained and discuss them. In Section VI, we present the threats that may have influenced the validity of our study. In Section VII, we show related studies and compare them to our approach. Finally, in Section VIII, we state our conclusions and plans for future work.
 
 % TODO: explicar um pouco dos findings
-
-
 
 \section{Code Coverage}
 
@@ -100,7 +86,6 @@ they require compiled code.
 
 \section{The Heuristic}
 
-% TODO: ref para mccabe
 As we wanted to avoid dynamic analysis, the only option was to apply statical analysis to
 the source code. The first step was to estimate the maximum number of tests that a class
 (or a method) needed. To do that, we decided to use McCabe's cyclomatic complexity \cite{mccabe}.
@@ -188,7 +173,7 @@ Tubaina & 261 & 372 & 298\\
 With both code coverage numbers (Emma's and ours), we then compared both to see how different
 they were. In Section below, we present the results found.
 
-\section{Findings}
+\section{Findings and Discussion}
 
 To do the analysis, we decided to use the number calculated by our heuristic minus the
 number calculated by Emma. It means that every time we find a zero, it meant that both numbers
@@ -233,10 +218,7 @@ is -0.7273, and the third quartile is 0.
   \label{fig:gnarus}
 \end{figure}
 
-\section{Discussion}
-
-Based on the numbers presented in the section above, we believe that the heuristic
-is acceptable. As the maximum mean error was 0.1149 found in these 3 projects, which means 11\%, 
+Based on the numbers we obtained, we believe that the heuristic has an acceptable performance. As the maximum mean error was 0.1149 found in these 3 projects, which means 11\%, 
 we do not think that it will be a problem when using it in large software repositories.
 
 % olhar as classes que deram muita diferenca e entender o pq, pra falar os problemas
