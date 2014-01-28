@@ -1,0 +1,94 @@
+
+R version 2.15.1 (2012-06-22) -- "Roasted Marshmallows"
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> #library(lattice)
+> library(RMySQL)
+Loading required package: DBI
+> con <- dbConnect(MySQL(), dbname="msr2014", user='root', password='')
+> 
+> basedir <- "/Users/mauricioaniche/textos/msr2014/stats/"
+> projects <- c("metricminer", "gnarus", "tubaina")
+> 
+> calculateAll = function(coverage, project, source) {
++ 
++ 	correlation = cor.test(coverage$emma, coverage$heuristica, method = "spearman", paired=true)
++ 	cat("p value ", correlation$p.value, " estimate ", correlation$estimate, file=paste(basedir, project, "-correlation-", source, ".txt", sep=""))
++ 
++ 	diferenca <- coverage$heuristica - coverage$emma
++ 	resumo <- summary(diferenca)
++ 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
++ 
++ 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
++ 	hist(diferenca)
++ 	axis(side=1, at=seq(-1,1,0.2))
++ 	dev.off()
++ 
++ 	#png(filename=paste(basedir, project, "-histograma-pct-", source, ".png", sep=""))
++ 	#histogram(diferenca)
++ 	#dev.off()
++ 
++ }
+> 
+> gelato = function(project) {	
++ 	sql <- paste("select cobertura as heuristica, complexity_covered/(complexity_missed + complexity_covered) as emma from ", project, "_gelato gg join ", project, "_emma ge on gg.classe = ge.class and gg.pacote = ge.package", sep="")
++ 	
++ 	coverage <- dbGetQuery(con, sql)
++ 
++ 	calculateAll(coverage, project, "gelato")
++ 	
++ }
+> 
+> aspectj = function(project) {
++ 
++ 	sql <- paste("select x.pacote, x.classe, cc, testes, if(testes/cc > 1, 1, testes/cc) as heuristica, emma from (select distinct mc.pacote, mc.classe,(select sum(mc1.cc) from ", project, "_cc mc1 where mc1.classe = mc.classe and mc1.pacote = mc.pacote) as cc,(select sum(m.testes) from ", project, "_aj m where m.classe = mc.classe and m.pacote = mc.pacote) as testes,(select complexity_covered/(complexity_missed + complexity_covered) as emma from ", project, "_emma e where e.class = mc.classe and e.package = mc.pacote) as emma from ", project, "_cc mc) x", sep="")
++ 
++ 	coverage <- dbGetQuery(con, sql)
++ 
++ 	calculateAll(coverage, project, "aspectj")
++ 
++ }
+> 
+> for(i in 1:length(projects)) {
++ 
++ 	project <- projects[i]
++ 
++ 	aspectj(project)
++ 	gelato(project)
++ 	
++ }
+Warning messages:
+1: In cor.test.default(coverage$emma, coverage$heuristica, method = "spearman",  :
+  Cannot compute exact p-values with ties
+2: In cor.test.default(coverage$emma, coverage$heuristica, method = "spearman",  :
+  Cannot compute exact p-values with ties
+3: In cor.test.default(coverage$emma, coverage$heuristica, method = "spearman",  :
+  Cannot compute exact p-values with ties
+4: In cor.test.default(coverage$emma, coverage$heuristica, method = "spearman",  :
+  Cannot compute exact p-values with ties
+5: In cor.test.default(coverage$emma, coverage$heuristica, method = "spearman",  :
+  Cannot compute exact p-values with ties
+6: In cor.test.default(coverage$emma, coverage$heuristica, method = "spearman",  :
+  Cannot compute exact p-values with ties
+> 
+> proc.time()
+   user  system elapsed 
+  0.559   0.053  25.987 

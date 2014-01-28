@@ -1,0 +1,1 @@
+p value  2.848896e-12  estimate  0.5620425
