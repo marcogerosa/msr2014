@@ -131,41 +131,29 @@ compiling the code may not be an option. Researchers need an alternative way to 
 Our heuristic is based on the idea that if a production method has N different branches, then it should
 have at least N associated unit tests. As we wanted to avoid dynamic analysis, the only option was 
 to apply static analysis to the source code. The first step was to estimate the number of branches 
-a production class has. To do that, we decided to use McCabe's cyclomatic complexity \cite{mccabe}.
-McCabe's number basically shows the different number of execution paths per method. The listing
-\ref{simple-code} below exemplifies it. In that case, McCabe's number would be 2.
+a production class has. To do that, we decided to use McCabe's cyclomatic complexity \cite{mccabe}, a popular
+metric on academia and industry.
+McCabe's number basically shows the different number of execution paths per method. 
 As we are calculating code coverage in class method, we calculate the class' cyclomatic complexity
 by summing up McCabe's number of all methods.
 
-\lstset{caption={McCabe's number to this method is 2.},
-label={simple-code}}
-\begin{lstlisting}
-public void doSomething(int a) {
-	int total = 0;
-	if(a>10) total += 1;
-	return total;
-}
-\end{lstlisting}
-
 The next step was to count the number of unit tests that invoke each production method. To accomplish that
 in a static way, we search for production method invocations that happen inside each unit test. As an example, in Listing
-\ref{unit-test}, the invocation \textit{inv.calculateTaxes()} links the surrounding unit test (\textit{shouldCalculateTaxes()}) to 
-the production method \textit{calculateTaxes(double hasIncrement)} from the class \textit{Invoice}.
+\ref{unit-test}, the invocation \textit{inv.calcTax()} links the surrounding unit test (\textit{shouldCalculateTaxes()}) to 
+the production method \textit{calcTaxes(double increment)} from the class \textit{Invoice}.
 
 \lstset{caption={An example of a unit test},
 label={unit-test}}
 \begin{lstlisting}
-class InvoiceTest {
-	@Test
-	public void shouldCalculateTaxes() {
-		Invoice inv = new Invoice("Customer", 5000.0);
+@Test
+public void shouldCalculateTaxes() {
+	Invoice inv = new Invoice("John", 50.0);
 
-		double tax = inv.calculateTaxes(false);
-		double biggerTax = inv.calculateTaxes(true);
+	double tax = inv.calcTaxes(false);
+	double biggerTax = inv.calcTaxes(true);
 		
-		assertEquals(5000 * 0.06, tax);
-		assertEquals(5000 * 0.07, biggerTax);
-	}
+	assertEquals(50 * 0.06, tax);
+	assertEquals(50 * 0.07, biggerTax);
 }
 \end{lstlisting}
 
@@ -186,11 +174,11 @@ the same unit test, we additionally link the production method \textit{taxC()} t
 
 \lstset{caption={Internal implementation of calculateTaxes()}, label={calculate-taxes-impl}}
 \begin{lstlisting}
-public double calculateTaxes(double hasIncrement) {
+public double calcTaxes(double increment) {
 	double taxA = taxA();
 	double taxB = taxB();
 	double sum = taxA + taxB;
-	if (hasIncrement) sum += taxC();
+	if (increment) sum += taxC();
 	return sum;
 }
 \end{lstlisting}
@@ -211,7 +199,7 @@ Cov(C) = min(1,\frac{\sum_{i=1}^{n}min(UnitTests(m_i), CC(m_i))}{\sum_{i=1}^{n}{
 Again, suppose that the class \textit{Invoice} has McCabe's number equals to 10, 
 and there are 6 unit tests that invoke methods that belong to it. 
 In this case, 6 / 10 = 0.6, which means 60\% of code coverage.
-All data collected in this study is also freely available\footnote{https://github.com/mauricioaniche/msr2014}.
+All data collected in this study is freely available\footnote{https://github.com/mauricioaniche/msr2014}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiment Design}
@@ -228,7 +216,7 @@ the size of each one.
 \caption{Quantity of classes and methods per project}
 \begin{tabular}{ | l | r | r | r | }
 \hline
-& Classes & Production Methods & Unit Tests\\ 
+& Classes & Methods & Unit Tests\\ 
 \hline
 Gnarus & 769 & 1823 & 826\\ 
 MetricMiner & 225 & 1009 & 341\\ 
@@ -257,26 +245,12 @@ with the implemented static analysis tool.
 \label{poc}
 
 First of all, we decided to check whether the heuristic made sense. To do that, we 
-created an aspect to the code to make it print all methods that were invoked by a unit test. 
-After executing the unit tests, we had an output
-like the one in Listing \ref{aspectj-output}, 
-which indicates the name of the test and the methods that were invoked.
-
-\lstset{caption={The output produced by the aspect}, label={aspectj-output}}
-\begin{lstlisting}
-test com.pack1.pack2.UnitTest.testA
-com.pack1.ProductionClass.methodA
-com.pack1.ProductionClass.methodB
-com.pack1.ProductionClass.methodC
-test com.pack1.pack2.UnitTest.testB
-com.pack1.ProductionClass.methodD
-com.pack1.ProductionClass.methodE
-\end{lstlisting}
-
-With the real number of unit tests per production method, we then
-calculated the ratio, using McCabe's number. In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
+created an aspect to the codebase that prints all methods that were invoked by a unit test. 
+With this information, we were able to calculate the number of unit tests per production method. 
+We then used the formula. In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
 \ref{fig:gnarus-aj}, we show the results we obtained for MetricMiner, Tubaina, and Gnarus, respectively. 
 
+% TODO: discutir melhor as porcentagens aqui tb, ver no R os valores
 In MetricMiner, we can notice that most of the data are between -0.2 and 0.2. 
 The median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
 third quartile is 0.2414.
@@ -289,21 +263,21 @@ is -0.7273, and the third quartile is 0.
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.4]{../stats/metricminer-histograma-aspectj.png}
+  \includegraphics[scale=0.3]{../stats/metricminer-histograma-aspectj.png}
   \caption{The dynamic implementation of the heuristic compared to Emma's in the MetricMiner}
   \label{fig:metricminer-aj}
 \end{figure}
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.4]{../stats/tubaina-histograma-aspectj.png}
+  \includegraphics[scale=0.3]{../stats/tubaina-histograma-aspectj.png}
   \caption{The dynamic implementation of the heuristic compared to Emma's in the Tubaina}
   \label{fig:tubaina-aj}
 \end{figure}
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.4]{../stats/gnarus-histograma-aspectj.png}
+  \includegraphics[scale=0.3]{../stats/gnarus-histograma-aspectj.png}
   \caption{The dynamic implementation of the heuristic compared to Emma's in the Gnarus}
   \label{fig:gnarus-aj}
 \end{figure}
@@ -332,9 +306,8 @@ third quartile is also 0.
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.4]{../stats/metricminer-histograma-gelato.png}
-
-  \caption{Our approach compared to Emma's in the MetricMiner}
+  \includegraphics[scale=0.3]{../stats/metricminer-histograma-gelato.png}
+  \caption{Our static implementation compared to Emma's in the MetricMiner}
   \label{fig:metricminer}
 \end{figure}
 
@@ -345,8 +318,8 @@ The median is -0.1603, and the mean is -0.3074. The first quartile is
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.4]{../stats/tubaina-histograma-gelato.png}
-  \caption{Our approach compared to Emma's in the Tubaina}
+  \includegraphics[scale=0.3]{../stats/tubaina-histograma-gelato.png}
+  \caption{Our static implementation compared to Emma's in the Tubaina}
   \label{fig:tubaina}
 \end{figure}
 
@@ -357,8 +330,8 @@ is -0.5, and the third quartile is 0.
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.4]{../stats/gnarus-histograma-gelato.png}
-  \caption{Our approach compared to Emma's in the Gnarus}
+  \includegraphics[scale=0.3]{../stats/gnarus-histograma-gelato.png}
+  \caption{Our static implementation compared to Emma's in the Gnarus}
   \label{fig:gnarus}
 \end{figure}
 
@@ -367,17 +340,9 @@ in which the median was 0, regular in the second one, in which the median was -0
 in the last project, the heuristic did not go well, as the median was -0.38.
 
 We decided to closely investigate why some classes had such a bad performance. We found out
-that our tool was not correctly interpreting a few expressions. In Listing \ref{lst:problem}, we
-show an example of a misinterpreted test. In that case, the current implementation of the 
-tool does not identify the invocation to \textit{doX()} and \textit{doY()} as both invocations
-come from a generic list.
-
-\lstset{caption={The tool does not identify invocations from a list}, label={lst:problem}}
-\begin{lstlisting}
-List<SomeClass> list = obj.getList();
-assertEquals(1, list.get(0).doX());
-assertEquals(1, list.get(1).doY());
-\end{lstlisting}
+that our tool was not correctly interpreting a few expressions. As an example, 
+the current implementation does not identify inline invocations with lists, such
+as \textit{list.get(0).doX()}. In that case, the invocation of \textit{doX()} is not identified.
 
 Although there were a few implementation problems, we believe that this is a valid approach
 when mining repositories.
@@ -427,9 +392,9 @@ the invoked methods.
 
 Code coverage is an important metric to analyze software maintenance and evolution. However, it is 
 not easy to be calculated, as most tools require compiled code. In this study, we conceived, implemented, 
-and evaluated a heuristic to calculate code coverage using static analysis. Apparently, our heuristic can be used 
-in mining software repositories studies, as its results were similar to those produced by the popular
-code coverage tool Emma. 
+and evaluated a heuristic to calculate code coverage using static analysis. 
+\textbf{Apparently, our heuristic can be used in mining software repositories studies}, 
+as its results were similar to those produced by the popular code coverage tool Emma. 
 
 As future work, we intend to fix existing bugs in our implementation in order to
 achieve better results. Once the desired level of performance is achieved, we intend to implement code coverage

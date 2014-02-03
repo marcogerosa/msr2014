@@ -4,7 +4,7 @@ con <- dbConnect(MySQL(), dbname="msr2014", user='root', password='')
 basedir <- "/Users/mauricioaniche/textos/msr2014/stats/"
 projects <- c("metricminer", "gnarus", "tubaina")
 
-calculateAll = function(coverage, project, source) {
+calculateAll = function(coverage, project, source, n_breaks) {
 
 	correlation = cor.test(coverage$emma, coverage$heuristica, method = "spearman", paired=true)
 	cat("p value ", correlation$p.value, " estimate ", correlation$estimate, file=paste(basedir, project, "-correlation-", source, ".txt", sep=""))
@@ -16,7 +16,7 @@ calculateAll = function(coverage, project, source) {
 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
 
 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
-	hist(diferenca, main=NULL, breaks=21, xlab=NULL, ylab=NULL)
+	hist(diferenca, main=NULL, breaks=n_breaks, xlab=NULL, ylab=NULL)
 	dev.off()
 
 }
@@ -26,7 +26,7 @@ gelato = function(project) {
 	
 	coverage <- dbGetQuery(con, sql)
 
-	calculateAll(coverage, project, "gelato")
+	calculateAll(coverage, project, "gelato", 21)
 	
 }
 
@@ -36,7 +36,7 @@ aspectj = function(project) {
 
 	coverage <- dbGetQuery(con, sql)
 
-	calculateAll(coverage, project, "aspectj")
+	calculateAll(coverage, project, "aspectj", 21)
 
 }
 

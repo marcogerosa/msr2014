@@ -27,20 +27,19 @@ Loading required package: DBI
 > basedir <- "/Users/mauricioaniche/textos/msr2014/stats/"
 > projects <- c("metricminer", "gnarus", "tubaina")
 > 
-> calculateAll = function(coverage, project, source) {
+> calculateAll = function(coverage, project, source, n_breaks) {
 + 
 + 	correlation = cor.test(coverage$emma, coverage$heuristica, method = "spearman", paired=true)
 + 	cat("p value ", correlation$p.value, " estimate ", correlation$estimate, file=paste(basedir, project, "-correlation-", source, ".txt", sep=""))
 + 
 + 	diferenca <- coverage$heuristica - coverage$emma
-+ 	diferenca_arredondada <- round(diferenca, 1)
++ 	#diferenca_arredondada <- round(diferenca, 1)
 + 	
 + 	resumo <- summary(diferenca)
 + 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
 + 
 + 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
-+ 	hist(diferenca, main=NULL, breaks=21, xlab=NULL, ylab=NULL)
-+ 	#axis(side=1, at=seq(-1,1,0.1))
++ 	hist(diferenca, main=NULL, breaks=n_breaks, xlab=NULL, ylab=NULL)
 + 	dev.off()
 + 
 + }
@@ -50,7 +49,7 @@ Loading required package: DBI
 + 	
 + 	coverage <- dbGetQuery(con, sql)
 + 
-+ 	calculateAll(coverage, project, "gelato")
++ 	calculateAll(coverage, project, "gelato", 21)
 + 	
 + }
 > 
@@ -60,7 +59,7 @@ Loading required package: DBI
 + 
 + 	coverage <- dbGetQuery(con, sql)
 + 
-+ 	calculateAll(coverage, project, "aspectj")
++ 	calculateAll(coverage, project, "aspectj", 21)
 + 
 + }
 > 
@@ -88,4 +87,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
-  0.540   0.058  26.498 
+  0.510   0.050  25.403 
