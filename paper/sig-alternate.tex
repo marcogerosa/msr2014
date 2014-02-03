@@ -1,3 +1,13 @@
+%Aqui voce mostra que a heurística em si funciona (isto é, tem resultados parecidos com o do Emma). Eu acho que
+%primeiro eu mostraria a heurística em si pra mostrar que o resultado perfeito (e inalcançável) é satisfatório quando
+%comparado ao Emma (porque se não fosse, nem a melhor implementação teria resultado satisfatório). Em seguida, eu mostraria 
+%a tua implementação. Depois, eu tentaria mostrar o quão 
+%perto ou longe está o cálculo do numerador da heurística (link unit test - production method) na tua implementação vs o aspecto (Listing 5). 
+%Bastaria mostrar precision e recall pra cada projeto. Lógico que, por conta de polimorfismo, etc, a implementação nunca será perfeita. 
+%Mas saber o quão perto ou o quão longe está, seria interessante. Esse no fundo é o desafio principal por detrás do calculo da cobertura.
+%Feito isso, aí sim eu rodaria nos 3 projetos e mostraria os resultados. Em resumo você começa num nível mais abstrato e termina na tua implementação
+%(que revela o melhor que a gente consegue fazer na prática por enquanto)
+
 \documentclass{sig-alternate}
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
@@ -83,7 +93,9 @@ proposed heuristic on how to calculate code coverage using static analysis seems
 This paper is structured as follows. In Section \ref{sec-code-coverage}, 
 we introduce the concept of code coverage. In Section \ref{sec-heuristic}, 
 we present our heuristic. In Section \ref{sec-experiment}, we describe the 
-experiment design. In Section \ref{sec-results}, we present the results we 
+experiment design. In Section \ref{poc}, we describe a proof of concept that
+we have done prior to implement the static tool. 
+In Section \ref{sec-results}, we present the results we 
 obtained and discuss them. In Section \ref{sec-threats}, 
 we present the threats that may have influenced the validity of our study. 
 In Section \ref{sec-related-work}, we show related studies and compare them 
@@ -95,7 +107,7 @@ conclusions and plans for future work.
 \section{Code Coverage}
 \label{sec-code-coverage}
 
-% Gustavo: tentei mostrar estudos relacionados aqiu, mas acho que poderia ter vendido melhor
+% Gustavo: tentei mostrar estudos relacionados aqui, mas acho que poderia ter vendido melhor
 Code coverage measures the degree to which production code is tested by a test suite. 
 When a unit test exercises a piece of code, developers say that such piece
 of code is covered. Many studies argue that code coverage is an important
@@ -157,11 +169,6 @@ class InvoiceTest {
 }
 \end{lstlisting}
 
-%Aniche, será que daria pra tratar de forma diferenciada (e.g., contando como 2 unit tests) o seguinte caso:
-%você invocar o mesmo método método de produção duas vezes dentro de um unit test, mas você o faz com input parameters diferentes.
-%Nesse caso, pode ser que a intenção tenha sido de exercitar duas branches do mesmo método de produção (mesmo sendo bad practice fazer isso
-%dentro de um único test case)
-
 There are a few particular cases that are worth mentioning. We are interested in the number 
 of distinct unit tests per production method. Hence, calling the same production method
 more than once inside a unit test does not make the relationship between the method 
@@ -204,8 +211,6 @@ Cov(C) = min(1,\frac{\sum_{i=1}^{n}min(UnitTests(m_i), CC(m_i))}{\sum_{i=1}^{n}{
 Again, suppose that the class \textit{Invoice} has McCabe's number equals to 10, 
 and there are 6 unit tests that invoke methods that belong to it. 
 In this case, 6 / 10 = 0.6, which means 60\% of code coverage.
-
-The tool we implemented is freely available on Github\footnote{https://github.com/mauricioaniche/gelato2}. 
 All data collected in this study is also freely available\footnote{https://github.com/mauricioaniche/msr2014}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -235,12 +240,7 @@ Tubaina & 261 & 372 & 298\\
 \end{table}
 
 Once we obtained the code coverage numbers (at the class level) reported by Emma and our tool, 
-we compared them to see how different
-they were. We used histograms and descriptive statistics. In the section below, we present the results found.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Findings and Discussion}
-\label{sec-results}
+we compared them to see how different they were. We used histograms and descriptive statistics. 
 
 To do the analysis, we decided to use the number calculated by our heuristic minus the
 number calculated by Emma. It means that every time we find a zero, it means that both numbers
@@ -248,10 +248,84 @@ were equal, and the heuristic was perfect. A negative number indicates that the 
 a smaller number than the real; a positive number indicates that the heuristic calculated a higher
 number.
 
+In the following sections, we first describe a proof of concept, and then present the result found
+with the implemented static analysis tool.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof of Concept}
+\label{poc}
+
+First of all, we decided to check whether the heuristic made sense. To do that, we 
+created an aspect to the code to make it print all methods that were invoked by a unit test. 
+After executing the unit tests, we had an output
+like the one in Listing \ref{aspectj-output}, 
+which indicates the name of the test and the methods that were invoked.
+
+\lstset{caption={The output produced by the aspect}, label={aspectj-output}}
+\begin{lstlisting}
+test com.pack1.pack2.UnitTest.testA
+com.pack1.ProductionClass.methodA
+com.pack1.ProductionClass.methodB
+com.pack1.ProductionClass.methodC
+test com.pack1.pack2.UnitTest.testB
+com.pack1.ProductionClass.methodD
+com.pack1.ProductionClass.methodE
+\end{lstlisting}
+
+With the real number of unit tests per production method, we then
+calculated the ratio, using McCabe's number. In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
+\ref{fig:gnarus-aj}, we show the results we obtained for MetricMiner, Tubaina, and Gnarus, respectively. 
+
+In MetricMiner, we can notice that most of the data are between -0.2 and 0.2. 
+The median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
+third quartile is 0.2414.
+In Tubaina project, the data is between
+-1 and 0. The median is 0, and the mean is 0.0790. The first quartile is
+0, and the third quartile is 0.1667. 
+In Gnarus project, we can see that most of data
+are between -2 and 0. The median is 0, the mean is -0.0152. The first quartile
+is -0.7273, and the third quartile is 0.
+
+\begin{figure}[h!H]
+  \centering
+  \includegraphics[scale=0.4]{../stats/metricminer-histograma-aspectj.png}
+  \caption{The dynamic implementation of the heuristic compared to Emma's in the MetricMiner}
+  \label{fig:metricminer-aj}
+\end{figure}
+
+\begin{figure}[h!H]
+  \centering
+  \includegraphics[scale=0.4]{../stats/tubaina-histograma-aspectj.png}
+  \caption{The dynamic implementation of the heuristic compared to Emma's in the Tubaina}
+  \label{fig:tubaina-aj}
+\end{figure}
+
+\begin{figure}[h!H]
+  \centering
+  \includegraphics[scale=0.4]{../stats/gnarus-histograma-aspectj.png}
+  \caption{The dynamic implementation of the heuristic compared to Emma's in the Gnarus}
+  \label{fig:gnarus-aj}
+\end{figure}
+
+Based on the numbers we obtained, we believe that the heuristic has an acceptable performance. 
+In particular, the maximum mean error found in these 3 projects was 0.1149 (11.5\%). Because of that,
+we decided to implement the metric using static analysis. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Static Analysis}
+\label{sec-results}
+
+As we were satisfied with the results on the proof of concept, we implemented a static tool
+to calculate code coverage. It is known that static analysis will never achieve the same performance
+found in dynamic analysis: static analysis cannot deal with polymorphism and other concepts from object-orientation.
+However, as said before, static analysis is important when dealing with a large set of projects.
+The tool we implemented is freely available on Github\footnote{https://github.com/mauricioaniche/gelato2}.
+
 %%TODO: How much exactly is 'most of the data'?
 %%TODO: Se Q1 = 0 e Q3 = 0 e se os resultados não estiverem arredondados, isso significa que pelo menos 50 % dos dados são exatamente 0, o que é muito bom
 %%TODO: Descrever esses dados com mais rigor
-In Figure \ref{fig:metricminer}, we show the histogram of the difference between Emma and our approach to
+In Figure \ref{fig:metricminer}, we show the histogram of the difference between Emma and our static approach to
 the MetricMiner project. By looking to this figure, one can notice that most of the data are between 0 and 0.2. 
 The median of the distribution is 0, and the mean is -0.1226. The first quartile is 0, and the
 third quartile is also 0.
@@ -288,7 +362,7 @@ is -0.5, and the third quartile is 0.
   \label{fig:gnarus}
 \end{figure}
 
-By looking to the numbers above, we notice that the heuristic was good in the first project,
+By looking to the numbers above, we notice that the implementation was good in the first project,
 in which the median was 0, regular in the second one, in which the median was -0.16. However,
 in the last project, the heuristic did not go well, as the median was -0.38.
 
@@ -305,79 +379,10 @@ assertEquals(1, list.get(0).doX());
 assertEquals(1, list.get(1).doY());
 \end{lstlisting}
 
-%Aqui voce mostra que a heurística em si funciona (isto é, tem resultados parecidos com o do Emma). Eu acho que
-%primeiro eu mostraria a heurística em si pra mostrar que o resultado perfeito (e inalcançável) é satisfatório quando
-%comparado ao Emma (porque se não fosse, nem a melhor implementação teria resultado satisfatório). Em seguida, eu mostraria 
-%a tua implementação. Depois, eu tentaria mostrar o quão 
-%perto ou longe está o cálculo do numerador da heurística (link unit test - production method) na tua implementação vs o aspecto (Listing 5). 
-%Bastaria mostrar precision e recall pra cada projeto. Lógico que, por conta de polimorfismo, etc, a implementação nunca será perfeita. 
-%Mas saber o quão perto ou o quão longe está, seria interessante. Esse no fundo é o desafio principal por detrás do calculo da cobertura.
-%Feito isso, aí sim eu rodaria nos 3 projetos e mostraria os resultados. Em resumo você começa num nível mais abstrato e termina na tua implementação
-%(que revela o melhor que a gente consegue fazer na prática por enquanto)
+Although there were a few implementation problems, we believe that this is a valid approach
+when mining repositories.
 
-\subsection{Isolating the heuristic}
-
-As we identified that the implementation contains problems that are sometimes influencing the results found,
-we decided to try to isolate the heuristic from the implementation. To do that, we decided to
-create an aspect to the code to make it print all methods that are invoked by a unit test. After executing
-the unit tests, we had an output
-like the one in Listing \ref{aspectj-output}, which indicates the name of the test and the methods that were invoked.
-
-\lstset{caption={The output produced by the aspect}, label={aspectj-output}}
-\begin{lstlisting}
-test com.pack1.pack2.UnitTest.testA
-com.pack1.ProductionClass.methodA
-com.pack1.ProductionClass.methodB
-com.pack1.ProductionClass.methodC
-test com.pack1.pack2.UnitTest.testB
-com.pack1.ProductionClass.methodD
-com.pack1.ProductionClass.methodE
-\end{lstlisting}
-
-With this information in hand, we then had the real number of unit tests per production method. We then
-calculated the ratio, using McCabe's number. In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
-\ref{fig:gnarus-aj}, we show the results we obtained for MetricMiner, Tubaina, and Gnarus, respectively. 
-
-In MetricMiner, we can notice that most of the data are between -0.2 and 0.2. 
-The median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
-third quartile is 0.2414.
-In Tubaina project, the data is between
--1 and 0. The median is 0, and the mean is 0.0790. The first quartile is
-0, and the third quartile is 0.1667. 
-In Gnarus project, we can see that most of data
-are between -2 and 0. The median is 0, the mean is -0.0152. The first quartile
-is -0.7273, and the third quartile is 0.
-
-%Faltou algo importante: mostrar o quão melhor esses valores são em comparação 
-%aos anteriores (usando tua implementação)
-
-\begin{figure}[h!H]
-  \centering
-  \includegraphics[scale=0.4]{../stats/metricminer-histograma-aspectj.png}
-  \caption{The dynamic implementation of the heuristic compared to Emma's in the MetricMiner}
-  \label{fig:metricminer-aj}
-\end{figure}
-
-\begin{figure}[h!H]
-  \centering
-  \includegraphics[scale=0.4]{../stats/tubaina-histograma-aspectj.png}
-  \caption{The dynamic implementation of the heuristic compared to Emma's in the Tubaina}
-  \label{fig:tubaina-aj}
-\end{figure}
-
-\begin{figure}[h!H]
-  \centering
-  \includegraphics[scale=0.4]{../stats/gnarus-histograma-aspectj.png}
-  \caption{The dynamic implementation of the heuristic compared to Emma's in the Gnarus}
-  \label{fig:gnarus-aj}
-\end{figure}
-
-Based on the numbers we obtained, we believe that the heuristic has an acceptable performance. 
-In particular, the maximum mean error found in these 3 projects was 0.1149 (11.5\%). Moreover, 
-as the results of our implementation are not too far from those produced using aspects (indeed, we
-will never achieve the same performance, since static analysis cannot deal with polymorphism and other
-concepts from object-orientation), we have some evidence that it might be feasible to employ our tool
-in mining software repositories studies.
+% TODO: aqui discutir as porcentagens
 
 \section{Threats to Validity}
 \label{sec-threats}
@@ -424,10 +429,19 @@ Code coverage is an important metric to analyze software maintenance and evoluti
 not easy to be calculated, as most tools require compiled code. In this study, we conceived, implemented, 
 and evaluated a heuristic to calculate code coverage using static analysis. Apparently, our heuristic can be used 
 in mining software repositories studies, as its results were similar to those produced by the popular
-code coverage tool Emma. As future work, we intend to fix existing bugs in our implementation in order to
+code coverage tool Emma. 
+
+As future work, we intend to fix existing bugs in our implementation in order to
 achieve better results. Once the desired level of performance is achieved, we intend to implement code coverage
 calculation at other levels of abstraction: method, package, and system. Finally, we also 
 envision running this same study on more projects from different companies and domains.
+
+% Gustavo: acha que expliquei bem?
+In a previous study, we found out that a few developers prefer to write a many different checks in a single
+unit test. In our heuristic, even though a method is invoked more than once in a unit test, we count it 
+as only one test. A future evaluation would be to consider that the same method can be tested more than once
+in a single unit test. That may affect the results, and it needs to be validated.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Acknowledgments}
