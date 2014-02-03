@@ -10,14 +10,13 @@ calculateAll = function(coverage, project, source) {
 	cat("p value ", correlation$p.value, " estimate ", correlation$estimate, file=paste(basedir, project, "-correlation-", source, ".txt", sep=""))
 
 	diferenca <- coverage$heuristica - coverage$emma
-	diferenca_arredondada <- round(diferenca, 1)
+	#diferenca_arredondada <- round(diferenca, 1)
 	
 	resumo <- summary(diferenca)
 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
 
 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
-	hist(diferenca_arredondada, main="")
-	axis(side=1, at=seq(-1,1,0.1))
+	hist(diferenca, main=NULL, breaks=21, xlab=NULL, ylab=NULL)
 	dev.off()
 
 }

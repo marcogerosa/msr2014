@@ -39,8 +39,8 @@ Loading required package: DBI
 + 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
 + 
 + 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
-+ 	hist(diferenca_arredondada, main="")
-+ 	axis(side=1, at=seq(-1,1,0.1))
++ 	hist(diferenca, main=NULL, breaks=21, xlab=NULL, ylab=NULL)
++ 	#axis(side=1, at=seq(-1,1,0.1))
 + 	dev.off()
 + 
 + }
@@ -88,4 +88,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
-  0.664   0.147  29.326 
+  0.540   0.058  26.498 

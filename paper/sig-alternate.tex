@@ -95,7 +95,7 @@ conclusions and plans for future work.
 \section{Code Coverage}
 \label{sec-code-coverage}
 
-% TODO: tentei mostrar estudos relacionados aqiu, mas acho que poderia ter vendido melhor
+% Gustavo: tentei mostrar estudos relacionados aqiu, mas acho que poderia ter vendido melhor
 Code coverage measures the degree to which production code is tested by a test suite. 
 When a unit test exercises a piece of code, developers say that such piece
 of code is covered. Many studies argue that code coverage is an important
@@ -188,15 +188,17 @@ public double calculateTaxes(double hasIncrement) {
 }
 \end{lstlisting}
 
-% Todo: Why at the class level? 
-As we are interested in code coverage at the class level, 
-we conceived our heuristic as follows (Equation 1): for a certain class $C$ with methods $m_1, ..., m_n$, 
+% Gustavo: gostou da explicacao?
+Code coverage can be calculated on different levels, such as method level, class level, or even
+system level. As this work is part of a full research, in there, we are interested in code coverage at the class level.
+Because of that, we conceived our heuristic as follows (Equation \ref{formula-doida}): 
+for a certain class $C$ with methods $m_1, ..., m_n$, 
 the code coverage of C is the ratio of the number of unit tests in the suite that test a certain method from C and 
 the sum of McCabe's number from each method inside C.
 
-% TODO: Veja se entendi e escrevi certo:
 \begin{equation}
-Coverage(C) = \frac{|\bigcup_{i=1}^{n}UnitTestsFor(m_i)|}{\sum_{i=1}^{n}{CiclomaticComplexity(m_i)}}
+\label{formula-doida}
+Cov(C) = min(1,\frac{\sum_{i=1}^{n}min(UnitTests(m_i), CC(m_i))}{\sum_{i=1}^{n}{CC(m_i)}})
 \end{equation}
 
 Again, suppose that the class \textit{Invoice} has McCabe's number equals to 10, 
@@ -232,7 +234,8 @@ Tubaina & 261 & 372 & 298\\
 \label{tab:projects}
 \end{table}
 
-Once we obtained the code coverage numbers (at the class level) reported by Emma and our tool, we compared them to see how different
+Once we obtained the code coverage numbers (at the class level) reported by Emma and our tool, 
+we compared them to see how different
 they were. We used histograms and descriptive statistics. In the section below, we present the results found.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
