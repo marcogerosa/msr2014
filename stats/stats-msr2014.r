@@ -1,4 +1,3 @@
-#library(lattice)
 library(RMySQL)
 con <- dbConnect(MySQL(), dbname="msr2014", user='root', password='')
 
@@ -11,17 +10,15 @@ calculateAll = function(coverage, project, source) {
 	cat("p value ", correlation$p.value, " estimate ", correlation$estimate, file=paste(basedir, project, "-correlation-", source, ".txt", sep=""))
 
 	diferenca <- coverage$heuristica - coverage$emma
+	diferenca_arredondada <- round(diferenca, 1)
+	
 	resumo <- summary(diferenca)
 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
 
 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
-	hist(diferenca)
-	axis(side=1, at=seq(-1,1,0.2))
+	hist(diferenca_arredondada, main="")
+	axis(side=1, at=seq(-1,1,0.1))
 	dev.off()
-
-	#png(filename=paste(basedir, project, "-histograma-pct-", source, ".png", sep=""))
-	#histogram(diferenca)
-	#dev.off()
 
 }
 
