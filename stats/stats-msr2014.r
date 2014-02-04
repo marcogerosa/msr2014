@@ -4,6 +4,15 @@ con <- dbConnect(MySQL(), dbname="msr2014", user='root', password='')
 basedir <- "/Users/mauricioaniche/textos/msr2014/stats/"
 projects <- c("metricminer", "gnarus", "tubaina")
 
+# from http://stackoverflow.com/questions/9317948/how-to-label-histogram-bars-with-data-values-or-percents-in-r
+histPercent <- function(x, ...) {
+   H <- hist(x, plot = FALSE)
+   H$density <- with(H, 100 * density* diff(breaks)[1])
+   labs <- paste(round(H$density), "%", sep="")
+   plot(H, freq = FALSE, labels = labs, ylim=c(0, 1.08*max(H$density)),...)
+}
+
+
 calculateAll = function(coverage, project, source, n_breaks) {
 
 	correlation = cor.test(coverage$emma, coverage$heuristica, method = "spearman", paired=true)
@@ -16,7 +25,7 @@ calculateAll = function(coverage, project, source, n_breaks) {
 	cat(resumo, file=paste(basedir, project, "-summary-", source, ".txt", sep=""))
 
 	png(filename=paste(basedir, project, "-histograma-", source, ".png", sep=""))
-	hist(diferenca, main=NULL, breaks=n_breaks, xlab=NULL, ylab=NULL)
+	histPercent(diferenca, col="gray", xlim=c(-1, 1), main=NULL, breaks=n_breaks, xlab=NULL, ylab=NULL)
 	dev.off()
 
 }
