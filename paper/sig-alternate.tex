@@ -81,7 +81,7 @@ researchers obtain the source code. Therefore, compiling and executing
 unit tests may not be feasible when conducting mining studies involving a large
 quantity of projects.
 
-An example of code metric that usually requires compiled code is \textit{code coverage}. 
+An example of code metric that usually requires compiled code is \textbf{code coverage}. 
 This metric defines the percentage of production code that is covered 
 by the test suite. To enable the calculation of code coverage for mining software
 repository studies, we conceived a heuristic that does not require compiled code
@@ -139,7 +139,7 @@ by summing up McCabe's number of all methods.
 
 The next step was to count the number of unit tests that invoke each production method. To accomplish that
 in a static way, we search for production method invocations that happen inside each unit test. As an example, in Listing
-\ref{unit-test}, the invocation \textit{inv.calcTax()} links the surrounding unit test (\textit{shouldCalculateTaxes()}) to 
+\ref{unit-test}, the invocation \textit{inv.calcTaxes()} links the surrounding unit test (\textit{shouldCalculateTaxes()}) to 
 the production method \textit{calcTaxes(double increment)} from the class \textit{Invoice}.
 
 \lstset{caption={An example of a unit test},
@@ -196,7 +196,7 @@ the sum of McCabe's number from each method inside C.
 Cov(C) = min(1,\frac{\sum_{i=1}^{n}min(UnitTests(m_i), CC(m_i))}{\sum_{i=1}^{n}{CC(m_i)}})
 \end{equation}
 
-Again, suppose that the class \textit{Invoice} has McCabe's number equals to 10, 
+Suppose that the class \textit{Invoice} has McCabe's number equals to 10, 
 and there are 6 unit tests that invoke methods that belong to it. 
 In this case, 6 / 10 = 0.6, which means 60\% of code coverage.
 All data collected in this study is freely available\footnote{https://github.com/mauricioaniche/msr2014}.
@@ -236,7 +236,7 @@ were equal, and the heuristic was perfect. A negative number indicates that the 
 a smaller number than the real; a positive number indicates that the heuristic calculated a higher
 number.
 
-In the following sections, we first describe a proof of concept, and then present the result found
+In the following sections, we first describe a proof of concept, and then present the results found
 with the implemented static analysis tool.
 
 
@@ -247,43 +247,46 @@ with the implemented static analysis tool.
 First of all, we decided to check whether the heuristic made sense. To do that, we 
 created an aspect to the codebase that prints all methods that were invoked by a unit test. 
 With this information, we were able to calculate the number of unit tests per production method. 
-We then used the formula. In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
+We then applied the formula. 
+
+In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
 \ref{fig:gnarus-aj}, we show the results we obtained for MetricMiner, Tubaina, and Gnarus, respectively. 
 
 % TODO: discutir melhor as porcentagens aqui tb, ver no R os valores
-In MetricMiner, we can notice that most of the data are between -0.2 and 0.2. 
-The median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
+In MetricMiner, we can notice that 47\% of the data is zero. It means that the heuristic
+was a perfect approximation of the real value. Descriptive statistics also show the same: 
+the median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
 third quartile is 0.2414.
-In Tubaina project, the data is between
--1 and 0. The median is 0, and the mean is 0.0790. The first quartile is
+
+In Tubaina project, 62\% of the data is zero. The median is 0, and the mean is 0.0790. The first quartile is
 0, and the third quartile is 0.1667. 
-In Gnarus project, we can see that most of data
-are between -2 and 0. The median is 0, the mean is -0.0152. The first quartile
-is -0.7273, and the third quartile is 0.
+In Gnarus project, we can see that 61\% of the data is zero. The median is 0, the mean is -0.0152. The first quartile
+is 0, and the third quartile is 0.
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.3]{../stats/metricminer-histograma-aspectj.png}
+  \includegraphics[scale=0.35]{../stats/metricminer-histograma-aspectj.png}
   \caption{The dynamic implementation of the heuristic compared to Emma's in the MetricMiner}
   \label{fig:metricminer-aj}
 \end{figure}
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.3]{../stats/tubaina-histograma-aspectj.png}
+  \includegraphics[scale=0.35]{../stats/tubaina-histograma-aspectj.png}
   \caption{The dynamic implementation of the heuristic compared to Emma's in the Tubaina}
   \label{fig:tubaina-aj}
 \end{figure}
 
 \begin{figure}[h!H]
   \centering
-  \includegraphics[scale=0.3]{../stats/gnarus-histograma-aspectj.png}
+  \includegraphics[scale=0.35]{../stats/gnarus-histograma-aspectj.png}
   \caption{The dynamic implementation of the heuristic compared to Emma's in the Gnarus}
   \label{fig:gnarus-aj}
 \end{figure}
 
 Based on the numbers we obtained, we believe that the heuristic has an acceptable performance. 
-In particular, the maximum mean error found in these 3 projects was 0.1149 (11.5\%). Because of that,
+In particular, if we look at the third quartile from all of them, we can notice that the number is
+still small, indicating that the heuristic looks acceptable. Because of that,
 we decided to implement the metric using static analysis. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -296,11 +299,9 @@ found in dynamic analysis: static analysis cannot deal with polymorphism and oth
 However, as said before, static analysis is important when dealing with a large set of projects.
 The tool we implemented is freely available on Github\footnote{https://github.com/mauricioaniche/gelato2}.
 
-%%TODO: How much exactly is 'most of the data'?
-%%TODO: Se Q1 = 0 e Q3 = 0 e se os resultados não estiverem arredondados, isso significa que pelo menos 50 % dos dados são exatamente 0, o que é muito bom
-%%TODO: Descrever esses dados com mais rigor
+% Gustavo: consegue ver outra forma de descrever isso?
 In Figure \ref{fig:metricminer}, we show the histogram of the difference between Emma and our static approach to
-the MetricMiner project. By looking to this figure, one can notice that most of the data are between 0 and 0.2. 
+the MetricMiner project. By looking to this figure, one can notice that 63\% of the data is zero. 
 The median of the distribution is 0, and the mean is -0.1226. The first quartile is 0, and the
 third quartile is also 0.
 
@@ -311,8 +312,8 @@ third quartile is also 0.
   \label{fig:metricminer}
 \end{figure}
 
-In Figure \ref{fig:tubaina}, from Tubaina project, most of the data are between
-0 and -0.2. However, there are also quite a few classes between -1.0 and -0.2. 
+In Figure \ref{fig:tubaina}, from Tubaina project, 45\% of the data is zero. 
+However, 48\% of the classes are between -0.2 and -1. Around 10\% are between -0.2 and -0.5.
 The median is -0.1603, and the mean is -0.3074. The first quartile is
 -0.6, and the third quartile is 0.
 
@@ -325,7 +326,8 @@ The median is -0.1603, and the mean is -0.3074. The first quartile is
 
 
 In Figure \ref{fig:gnarus}, from Gnarus project, we can see that the data are more varied as 
-compared to the previous cases. The median is -0.3852, the mean is -0.3272. The first quartile
+compared to the previous cases. Only 27\% is zero. Around 50\% are between -0.5 and -1. 
+The median is also higher than the others: -0.3852. The mean is -0.3272. The first quartile
 is -0.5, and the third quartile is 0.
 
 \begin{figure}[h!H]
@@ -344,10 +346,12 @@ that our tool was not correctly interpreting a few expressions. As an example,
 the current implementation does not identify inline invocations with lists, such
 as \textit{list.get(0).doX()}. In that case, the invocation of \textit{doX()} is not identified.
 
+% GUSTAVO: revisa e completa se achar necessario?
 Although there were a few implementation problems, we believe that this is a valid approach
-when mining repositories.
+when mining repositories. The numbers showed, both from the proof of concept and from the
+static tool, that the heuristic is acceptable. We believe that, with some effort on the tool,
+we will be able to use it to analyse large sets of projects.
 
-% TODO: aqui discutir as porcentagens
 
 \section{Threats to Validity}
 \label{sec-threats}
@@ -402,7 +406,8 @@ calculation at other levels of abstraction: method, package, and system. Finally
 envision running this same study on more projects from different companies and domains.
 
 % Gustavo: acha que expliquei bem?
-In a previous study, we found out that a few developers prefer to write a many different checks in a single
+In addition, in a previous study \cite{aniche-csmr}, 
+we found out that a few developers prefer to write a many different checks in a single
 unit test. In our heuristic, even though a method is invoked more than once in a unit test, we count it 
 as only one test. A future evaluation would be to consider that the same method can be tested more than once
 in a single unit test. That may affect the results, and it needs to be validated.
