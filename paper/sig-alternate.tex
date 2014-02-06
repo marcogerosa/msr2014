@@ -1,13 +1,3 @@
-%Aqui voce mostra que a heurística em si funciona (isto é, tem resultados parecidos com o do Emma). Eu acho que
-%primeiro eu mostraria a heurística em si pra mostrar que o resultado perfeito (e inalcançável) é satisfatório quando
-%comparado ao Emma (porque se não fosse, nem a melhor implementação teria resultado satisfatório). Em seguida, eu mostraria 
-%a tua implementação. Depois, eu tentaria mostrar o quão 
-%perto ou longe está o cálculo do numerador da heurística (link unit test - production method) na tua implementação vs o aspecto (Listing 5). 
-%Bastaria mostrar precision e recall pra cada projeto. Lógico que, por conta de polimorfismo, etc, a implementação nunca será perfeita. 
-%Mas saber o quão perto ou o quão longe está, seria interessante. Esse no fundo é o desafio principal por detrás do calculo da cobertura.
-%Feito isso, aí sim eu rodaria nos 3 projetos e mostraria os resultados. Em resumo você começa num nível mais abstrato e termina na tua implementação
-%(que revela o melhor que a gente consegue fazer na prática por enquanto)
-
 \documentclass{sig-alternate}
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
@@ -54,10 +44,10 @@ This is unfeasible for large-scale mining software repositories studies. To this
 we conceived and implemented a heuristic to calculate code coverage based on 
 code static analysis. In this paper, we describe the heuristic, its implementation, 
 and a preliminary evaluation on three industry projects. We evaluated our implementation by 
-comparing its results to those produced by the popular code coverage tool Emma. Results showed that, 
-although our implementation is not complete yet, its results were at least regular for two of the projects. 
+comparing its results to those produced by the popular code coverage tool called Emma. 
+Preliminary results showed that our approach has acceptable results in 2 out of 
+the 3 analyzed projects, when compared to the state-of-the-use code coverage software.
 These promising results showed that it might be suitable to use our implementation for mining studies.
-
 
 \end{abstract}
 
@@ -65,29 +55,35 @@ These promising results showed that it might be suitable to use our implementati
 \section{Introduction}
 \label{sec:intro}
 
-One advantage of studies that make use of mining software repository techniques
-is that they can leverage a large quantity of projects and data. This huge
-amount of information allows researchers to validate hypotheses with more property.
-
-Researchers can extract data from many different sources, 
+The goal of mining software repositories techniques is to help
+researchers to extract data from many different sources, 
 such as source code repositories (a.k.a. version control systems), 
 issue trackers, mailing lists, and so on. Most of these repositories 
 store textual information, which is often easy to extract but hard to process. 
-In the case of source code mining, a particular problem arises: some metrics 
-require the code to be compiled first. And compiling code is a complicated task. 
-Each project has its own build process and required libraries. Furthermore, 
+In the case of source code mining, a particular problem arises when metrics 
+require the code to be compiled first. Compiling code is not a straightforward task. 
+For instance, each project has its own build process and might require external libraries. Furthermore, 
 it is common that many of these libraries are not available by the time 
-researchers obtain the source code. Therefore, compiling and executing 
-unit tests may not be feasible when conducting mining studies involving a large
-quantity of projects.
+that researchers obtain the source code. Therefore, compiling and executing 
+unit tests may not be feasible when conducting a large scale mining software repository study.
+% TODO: refs
+This is a well-known problem in the software engineering research. 
+Some authors have spent a significant effort on it[REF1, REF2, REF3], 
+but no consensus has emerged from these discussions.
 
-An example of code metric that usually requires compiled code is \textbf{code coverage}. 
+An example of such metric is \textbf{code coverage}. 
 This metric defines the percentage of production code that is covered 
 by the test suite. To enable the calculation of code coverage for mining software
 repository studies, we conceived a heuristic that does not require compiled code
-and neither requires the test suite to be run. In this paper, we describe this heuristic,
-its implementation, and its evaluation on three industry projects. 
-We found out that, although our tool implementation is not fully completed yet, the 
+and neither requires the test suite to be run. 
+
+This is not the first work on this. Alves and Visser \cite{tiago} have worked on this
+before. However, their approach suggests the creation of an execution graph, which is
+not an easy task.
+In this paper, we describe a simpler heuristic, that uses 
+basically McCabe's number \cite{mccabe} and the number of unit tests.
+We also discuss its implementation, and its evaluation on three industry projects. 
+We found out that, although our tool implementation is not fully completed yet, our 
 proposed heuristic on how to calculate code coverage using static analysis seems valid. 
 
 This paper is structured as follows. In Section \ref{sec-code-coverage}, 
@@ -104,36 +100,37 @@ conclusions and plans for future work.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Code Coverage}
+\section{Background}
 \label{sec-code-coverage}
 
 % Gustavo: tentei mostrar estudos relacionados aqui, mas acho que poderia ter vendido melhor
-Code coverage measures the degree to which production code is tested by a test suite. 
+Code coverage measures the degree to which production code is tested by a test suite \cite{code-coverage}. 
 When a unit test exercises a piece of code, developers say that such piece
 of code is covered. Many studies argue that code coverage is an important
 metric when dealing with software maintenance and evolution \cite{sebastian} \cite{del-frate} \cite{mei-hwa}.
 
-The common output of the tools is a percentage, which indicates the fraction of production code lines, instructions, 
+The common output of the tools that implement such metric is a percentage value, 
+which indicates the fraction of production code lines, instructions, 
 or even execution branches that are exercised by the test suite. Such information can be shown according to different
-degrees of abstraction, such as per package, per compilation unit, per class, or per method. 
+degrees of abstraction, such as per package, compilation unit, class, or method. 
 
 Emma \footnote{http://emma.sourceforge.net} and Cobertura\footnote{http://cobertura.github.io/cobertura} are popular 
-code code coverage tools. They both use dynamic analysis to calculate the metric. They instrument the code, execute 
-the unit test suite, and then calculate the degree to which the production code was exercised by the test suite. Besides 
-taking a long time to calculate (as they need to execute the entire test suite),
-they require compiled code. As said before, when analyzing a large quantity of repositories,
-compiling the code may not be an option. Researchers need an alternative way to calculate code coverage.
+code code coverage tools. Both of them use dynamic analysis to calculate the metric. They instrument the code, execute 
+the unit test suite, and then calculate the degree to which the production code was exercised by the test suite. 
+These tools have two main problems: (i) depending on the size of the test suite, it can take a long time to compute
+the metric, and (ii) they require compiled code, and as we said before, compiling large amount of projects is 
+still an open research topic. Researchers then need an alternative way to calculate code coverage.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Proposed Heuristic}
+\section{Our Approach}
 \label{sec-heuristic}
 
 Our heuristic is based on the idea that if a production method has N different branches, then it should
-have at least N associated unit tests. As we wanted to avoid dynamic analysis, the only option was 
-to apply static analysis to the source code. The first step was to estimate the number of branches 
+have at least N associated unit tests. The first step is to estimate the number of branches 
 a production class has. To do that, we decided to use McCabe's cyclomatic complexity \cite{mccabe}, a popular
 metric on academia and industry.
-McCabe's number basically shows the different number of execution paths per method. 
+McCabe's number shows the different number of execution paths per method. 
 As we are calculating code coverage in class method, we calculate the class' cyclomatic complexity
 by summing up McCabe's number of all methods.
 
@@ -159,8 +156,8 @@ public void shouldCalculateTaxes() {
 
 There are a few particular cases that are worth mentioning. We are interested in the number 
 of distinct unit tests per production method. Hence, calling the same production method
-more than once inside a unit test does not make the relationship between the method 
-and the test any different (even if input parameters differ). In the example above, the 
+more than once inside the same unit test does not cause any difference in our metric 
+(even if input parameters differ). For instance, in our last example, the 
 method \textit{calculateTaxes()} is invoked twice, but the only thing we do is mark it 
 as being tested by \textit{shouldCalculateTaxes()}.
 
@@ -171,6 +168,13 @@ invocation \textit{inc.calculateTaxes(false)} inside the test \textit{shouldCalc
 we mark \textit{calculateTaxes()}, \textit{taxA()}, and \textit{taxB()} as tested 
 by such unit test. Furthermore, due to the invocation \textit{inv.calculateTaxes(true)} inside
 the same unit test, we additionally link the production method \textit{taxC()} to such test.
+
+In addition, suppose that a class C has a method M1. And, method M1 calls method M2. But, it only calls M2 
+if a certain condition N is true. 
+Since we are using static analysis, our approach will count M2 as a covered method, regardless the value of N. 
+That can be seen in Listing \ref{calculate-taxes-impl}: if no test passes \textit{increment} as true,
+\textit{taxC();} will never be invoked. Our approach does not notice that, 
+and assume that \textit{taxC()} was tested.
 
 \lstset{caption={Internal implementation of calculateTaxes()}, label={calculate-taxes-impl}}
 \begin{lstlisting}
@@ -183,13 +187,13 @@ public double calcTaxes(double increment) {
 }
 \end{lstlisting}
 
-% Gustavo: gostou da explicacao?
 Code coverage can be calculated on different levels, such as method level, class level, or even
-system level. As this work is part of a full research, in there, we are interested in code coverage at the class level.
-Because of that, we conceived our heuristic as follows (Equation \ref{formula-doida}): 
-for a certain class $C$ with methods $m_1, ..., m_n$, 
+system level. Due to space constraints, in the paper we focus on the code coverage at the class level as
+a mean of our proof of concept.
+We conceived our heuristic as follows (Equation \ref{formula-doida}): 
+where for a certain class $C$ with methods $m_1, ..., m_n$, 
 the code coverage of C is the ratio of the number of unit tests in the suite that test a certain method from C and 
-the sum of McCabe's number from each method inside C.
+the sum of McCabe's number from each method inside C. In the formula, CC stands for Cyclomatic Complexity.
 
 \begin{equation}
 \label{formula-doida}
@@ -205,11 +209,14 @@ All data collected in this study is freely available\footnote{https://github.com
 \section{Experiment Design}
 \label{sec-experiment}
 
-To validate the heuristic, we decided to compare the code coverage calculated by it with the ones 
-calculated by a dynamic analysis tool. We chose Emma as we had a previous experience with it. We
-had 3 projects as subjects, all of them developed by the same company, in Java. Two of them are
-web applications and one of them is a console application. In Table \ref{tab:projects}, we describe
-the size of each one.
+To validate the heuristic, we compare the code coverage calculated, with the ones 
+calculated by Emma - which is one of the most used code coverage tool.
+We
+analyze 3 Java projects developed by a Brazilian software company. Two of them are
+web applications and one of them is a console application. The source code of these projects are 
+not available due to confidentiality restrictions.
+In Table \ref{tab:projects}, we describe
+some characteristics of them.
 
 \begin{table}[h!]
 \centering
@@ -227,17 +234,17 @@ Tubaina & 261 & 372 & 298\\
 \label{tab:projects}
 \end{table}
 
-Once we obtained the code coverage numbers (at the class level) reported by Emma and our tool, 
-we compared them to see how different they were. We used histograms and descriptive statistics. 
+We decided to use the following formula (\ref{formula-doida-diff}) to proceed with the analysis:
 
-To do the analysis, we decided to use the number calculated by our heuristic minus the
-number calculated by Emma. It means that every time we find a zero, it means that both numbers
-were equal, and the heuristic was perfect. A negative number indicates that the heuristic calculated
+\begin{equation}
+\label{formula-doida-diff}
+diff = ourCoverage - emmaCoverage
+\end{equation}
+
+Where every time that diff variable reaches zero, it means that both numbers
+were equal, and the heuristic works as expected. A negative number indicates that the heuristic calculated
 a smaller number than the real; a positive number indicates that the heuristic calculated a higher
 number.
-
-In the following sections, we first describe a proof of concept, and then present the results found
-with the implemented static analysis tool.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -252,9 +259,8 @@ We then applied the formula.
 In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
 \ref{fig:gnarus-aj}, we show the results we obtained for MetricMiner, Tubaina, and Gnarus, respectively. 
 
-% TODO: discutir melhor as porcentagens aqui tb, ver no R os valores
 In MetricMiner, we can notice that 47\% of the data is zero. It means that the heuristic
-was a perfect approximation of the real value. Descriptive statistics also show the same: 
+presents a close approximation of the real coverage. Descriptive statistics also show the same: 
 the median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
 third quartile is 0.2414.
 
@@ -293,11 +299,10 @@ we decided to implement the metric using static analysis.
 \section{Static Analysis}
 \label{sec-results}
 
-As we were satisfied with the results on the proof of concept, we implemented a static tool
+The next step of our work is to provide a more reliable view using static analysis. 
+We then implemented\footnote{https://github.com/mauricioaniche/gelato2} a static tool
 to calculate code coverage. It is known that static analysis will never achieve the same performance
 found in dynamic analysis: static analysis cannot deal with polymorphism and other concepts from object-orientation.
-However, as said before, static analysis is important when dealing with a large set of projects.
-The tool we implemented is freely available on Github\footnote{https://github.com/mauricioaniche/gelato2}.
 
 % Gustavo: consegue ver outra forma de descrever isso?
 In Figure \ref{fig:metricminer}, we show the histogram of the difference between Emma and our static approach to
@@ -356,9 +361,13 @@ we will be able to use it to analyse large sets of projects.
 \section{Threats to Validity}
 \label{sec-threats}
 
-There are a few threats to the validity of this research. The first one is that our implementation
+There are a few threats to the validity of this research. The first one is that the
+heuristic itself may not make sense. However, as shown in the proof of concept,
+the idea seems valid, as the numbers found were interesting.
+
+Our implementation
 still does not fully work: implementing a parser is not an easy task. However, as we showed, the 
-heuristic itself seems valid. 
+heuristic itself seems valid.
 
 We only evaluated three projects that belong to the same company. It means that these projects
 follow basically the same structure, development, and testing rules. That may bias the results.
@@ -387,8 +396,6 @@ the real and the calculated coverage was small in most cases.
 This approach is slightly different from ours. We use McCabe's number to estimate the
 minimum number of tests that a class should have. We are also more interested on calculating
 code coverage at the class level (from which is possible to derive the system-level number). 
-Also, creating a call graph is not simple and takes more effort than just counting
-the invoked methods.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion and Future Work}
@@ -405,19 +412,13 @@ achieve better results. Once the desired level of performance is achieved, we in
 calculation at other levels of abstraction: method, package, and system. Finally, we also 
 envision running this same study on more projects from different companies and domains.
 
-% Gustavo: acha que expliquei bem?
-In addition, in a previous study \cite{aniche-csmr}, 
-we found out that a few developers prefer to write a many different checks in a single
-unit test. In our heuristic, even though a method is invoked more than once in a unit test, we count it 
-as only one test. A future evaluation would be to consider that the same method can be tested more than once
-in a single unit test. That may affect the results, and it needs to be validated.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Acknowledgments}
 
 We thank \textit{Caelum Ensino e Inovação} for allowing us to run the study in its environment,
-as well as supporting the development of the tool.
+as well as supporting the development of the tool. We also thank Gustavo Pinto, from UFPE, who
+gave us a valuable feedback on this text.
 
 \bibliographystyle{abbrv}
 \bibliography{sigproc}
