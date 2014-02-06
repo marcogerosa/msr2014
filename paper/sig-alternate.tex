@@ -30,7 +30,7 @@ A Heuristic Based on Static Code Analysis}
 \author{
 \alignauthor
 Mauricio F. Aniche, Gustavo A. Oliva, Marco A. Gerosa\\
-\affaddr{Institute of Mathematics and Statistics}\\
+\affaddr{Computer Science Department / IME}\\
 \affaddr{University of São Paulo}\\
 \email{\{aniche, goliva, gerosa\}@ime.usp.br}
 }
@@ -38,7 +38,7 @@ Mauricio F. Aniche, Gustavo A. Oliva, Marco A. Gerosa\\
 \maketitle
 \begin{abstract}
 
-Code coverage is an important metric for software evolution and maintenance.
+Code coverage is an important metric for software evolution and analysis.
 However, computing it requires building the project and executing its test suite.
 This is unfeasible for large-scale mining software repositories studies. To this end,
 we conceived and implemented a heuristic to calculate code coverage based on 
@@ -46,8 +46,8 @@ code static analysis. In this paper, we describe the heuristic, its implementati
 and a preliminary evaluation on three industry projects. We evaluated our implementation by 
 comparing its results to those produced by the popular code coverage tool called Emma. 
 Preliminary results showed that our approach has acceptable results in 2 out of 
-the 3 analyzed projects, when compared to the state-of-the-use code coverage software.
-These promising results showed that it might be suitable to use our implementation for mining studies.
+the 3 analyzed projects.
+These promising results showed that used and further extended for mining studies.
 
 \end{abstract}
 
@@ -55,21 +55,14 @@ These promising results showed that it might be suitable to use our implementati
 \section{Introduction}
 \label{sec:intro}
 
-The goal of mining software repositories techniques is to help
-researchers to extract data from many different sources, 
-such as source code repositories (a.k.a. version control systems), 
-issue trackers, mailing lists, and so on. Most of these repositories 
-store textual information, which is often easy to extract but hard to process. 
-In the case of source code mining, a particular problem arises when metrics 
-require the code to be compiled first. Compiling code is not a straightforward task. 
+Version control systems store software source code, which is often easy to extract but hard to process. 
+Compiling code is not a straightforward task. 
 For instance, each project has its own build process and might require external libraries. Furthermore, 
 it is common that many of these libraries are not available by the time 
 that researchers obtain the source code. Therefore, compiling and executing 
 unit tests may not be feasible when conducting a large scale mining software repository study.
-% TODO: refs
-This is a well-known problem in the software engineering research. 
-Some authors have spent a significant effort on it[REF1, REF2, REF3], 
-but no consensus has emerged from these discussions.
+This may cause problems when metrics 
+require the code to be compiled first. 
 
 An example of such metric is \textbf{code coverage}. 
 This metric defines the percentage of production code that is covered 
@@ -77,14 +70,7 @@ by the test suite. To enable the calculation of code coverage for mining softwar
 repository studies, we conceived a heuristic that does not require compiled code
 and neither requires the test suite to be run. 
 
-This is not the first work on this. Alves and Visser \cite{tiago} have worked on this
-before. However, their approach suggests the creation of an execution graph, which is
-not an easy task.
-In this paper, we describe a simpler heuristic, that uses 
-basically McCabe's number \cite{mccabe} and the number of unit tests.
-We also discuss its implementation, and its evaluation on three industry projects. 
-We found out that, although our tool implementation is not fully completed yet, our 
-proposed heuristic on how to calculate code coverage using static analysis seems valid. 
+This heuristic uses McCabe's number \cite{mccabe} and the number of unit tests to estimate code coverage. We discuss in this paper its implementation and its evaluation on three industry projects. 
 
 This paper is structured as follows. In Section \ref{sec-code-coverage}, 
 we introduce the concept of code coverage. In Section \ref{sec-heuristic}, 
@@ -111,15 +97,14 @@ metric when dealing with software maintenance and evolution \cite{sebastian} \ci
 
 The common output of the tools that implement such metric is a percentage value, 
 which indicates the fraction of production code lines, instructions, 
-or even execution branches that are exercised by the test suite. Such information can be shown according to different
-degrees of abstraction, such as per package, compilation unit, class, or method. 
+or even execution branches that are exercised by the test suite. Such information are shown according to different
+perspectives, such as per package, compilation unit, class, or method. 
 
 Emma \footnote{http://emma.sourceforge.net} and Cobertura\footnote{http://cobertura.github.io/cobertura} are popular 
-code code coverage tools. Both of them use dynamic analysis to calculate the metric. They instrument the code, execute 
+code coverage tools. Both of them use dynamic analysis to calculate the metric. They instrument the code, execute 
 the unit test suite, and then calculate the degree to which the production code was exercised by the test suite. 
 These tools have two main problems: (i) depending on the size of the test suite, it can take a long time to compute
-the metric, and (ii) they require compiled code, and as we said before, compiling large amount of projects is 
-still an open research topic. Researchers then need an alternative way to calculate code coverage.
+the metric, and (ii) they require compiled code, and as we said before, compiling large amount of projects is not trivial. Researchers then need an alternative way to calculate code coverage.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -128,14 +113,14 @@ still an open research topic. Researchers then need an alternative way to calcul
 
 Our heuristic is based on the idea that if a production method has N different branches, then it should
 have at least N associated unit tests. The first step is to estimate the number of branches 
-a production class has. To do that, we decided to use McCabe's cyclomatic complexity \cite{mccabe}, a popular
-metric on academia and industry.
+a production class has. To do that, we use McCabe's cyclomatic complexity \cite{mccabe}, a popular
+metric both on academia and industry.
 McCabe's number shows the different number of execution paths per method. 
-As we are calculating code coverage in class method, we calculate the class' cyclomatic complexity
+As we are calculating code coverage in class methods, we calculate the class' cyclomatic complexity
 by summing up McCabe's number of all methods.
 
 The next step was to count the number of unit tests that invoke each production method. To accomplish that
-in a static way, we search for production method invocations that happen inside each unit test. As an example, in Listing
+in a static way, we search for production method invocations that occur inside each unit test. As an example, in Listing
 \ref{unit-test}, the invocation \textit{inv.calcTaxes()} links the surrounding unit test (\textit{shouldCalculateTaxes()}) to 
 the production method \textit{calcTaxes(double increment)} from the class \textit{Invoice}.
 
@@ -154,11 +139,11 @@ public void shouldCalculateTaxes() {
 }
 \end{lstlisting}
 
-There are a few particular cases that are worth mentioning. We are interested in the number 
+A few particular cases are worth mentioning. We are interested in the number 
 of distinct unit tests per production method. Hence, calling the same production method
 more than once inside the same unit test does not cause any difference in our metric 
 (even if input parameters differ). For instance, in our last example, the 
-method \textit{calculateTaxes()} is invoked twice, but the only thing we do is mark it 
+method \textit{calculateTaxes()} is invoked twice, but we mark it 
 as being tested by \textit{shouldCalculateTaxes()}.
 
 However, if a production method makes use of many other methods in its implementation,
@@ -169,12 +154,11 @@ we mark \textit{calculateTaxes()}, \textit{taxA()}, and \textit{taxB()} as teste
 by such unit test. Furthermore, due to the invocation \textit{inv.calculateTaxes(true)} inside
 the same unit test, we additionally link the production method \textit{taxC()} to such test.
 
-In addition, suppose that a class C has a method M1. And, method M1 calls method M2. But, it only calls M2 
-if a certain condition N is true. 
+In addition, suppose that a class C has a method M1 and this method calls method M2. But, it only calls M2 if a certain condition N is true. 
 Since we are using static analysis, our approach will count M2 as a covered method, regardless the value of N. 
 That can be seen in Listing \ref{calculate-taxes-impl}: if no test passes \textit{increment} as true,
 \textit{taxC();} will never be invoked. Our approach does not notice that, 
-and assume that \textit{taxC()} was tested.
+assuming that \textit{taxC()} was tested.
 
 \lstset{caption={Internal implementation of calculateTaxes()}, label={calculate-taxes-impl}}
 \begin{lstlisting}
@@ -188,12 +172,8 @@ public double calcTaxes(double increment) {
 \end{lstlisting}
 
 Code coverage can be calculated on different levels, such as method level, class level, or even
-system level. Due to space constraints, in the paper we focus on the code coverage at the class level as
-a mean of our proof of concept.
-We conceived our heuristic as follows (Equation \ref{formula-doida}): 
-where for a certain class $C$ with methods $m_1, ..., m_n$, 
-the code coverage of C is the ratio of the number of unit tests in the suite that test a certain method from C and 
-the sum of McCabe's number from each method inside C. In the formula, CC stands for Cyclomatic Complexity.
+system level. Due to space constraints, in the paper we focus on the code coverage at the class level as a mean of our proof of concept.
+We conceived our heuristic as follows (Equation \ref{formula-doida}): where for a certain class $C$ with methods $m_1, ..., m_n$, the code coverage of C is the ratio of the number of unit tests in the suite that test a certain method from C and the sum of McCabe's number from each method inside C. In the formula, CC stands for Cyclomatic Complexity.
 
 \begin{equation}
 \label{formula-doida}
@@ -202,25 +182,21 @@ Cov(C) = min(1,\frac{\sum_{i=1}^{n}min(UnitTests(m_i), CC(m_i))}{\sum_{i=1}^{n}{
 
 Suppose that the class \textit{Invoice} has McCabe's number equals to 10, 
 and there are 6 unit tests that invoke methods that belong to it. 
-In this case, 6 / 10 = 0.6, which means 60\% of code coverage.
+In this case, 6 / 10 = 0.6, meaning  60\% of code coverage.
 All data collected in this study is freely available\footnote{https://github.com/mauricioaniche/msr2014}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiment Design}
 \label{sec-experiment}
 
-To validate the heuristic, we compare the code coverage calculated, with the ones 
-calculated by Emma - which is one of the most used code coverage tool.
-We
-analyze 3 Java projects developed by a Brazilian software company. Two of them are
-web applications and one of them is a console application. The source code of these projects are 
-not available due to confidentiality restrictions.
-In Table \ref{tab:projects}, we describe
-some characteristics of them.
+To validate the heuristic, we compare the code coverage calculated to the results of Emma - which is one of the most used code coverage tool.
+We analyze 3 Java projects developed by a Brazilian software company. Two of them are
+web applications and one of them is a console application. In Table \ref{tab:projects}, we describe
+some characteristics of the projects.
 
 \begin{table}[h!]
 \centering
-\caption{Quantity of classes and methods per project}
+\caption{Number of classes and methods per project}
 \begin{tabular}{ | l | r | r | r | }
 \hline
 & Classes & Methods & Unit Tests\\ 
@@ -242,17 +218,15 @@ diff = ourCoverage - emmaCoverage
 \end{equation}
 
 Where every time that diff variable reaches zero, it means that both numbers
-were equal, and the heuristic works as expected. A negative number indicates that the heuristic calculated
-a smaller number than the real; a positive number indicates that the heuristic calculated a higher
+were equal, and the heuristic worked as expected. A negative number indicates that the heuristic calculated a smaller number than the real; a positive number indicates that the heuristic calculated a higher
 number.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Proof of Concept}
+\section{Proof of concept}
 \label{poc}
 
-First of all, we decided to check whether the heuristic made sense. To do that, we 
-created an aspect to the codebase that prints all methods that were invoked by a unit test. 
+We created an aspect to the codebase that prints all methods that were invoked by a unit test. 
 With this information, we were able to calculate the number of unit tests per production method. 
 We then applied the formula. 
 
@@ -261,13 +235,12 @@ In Figures \ref{fig:metricminer-aj}, \ref{fig:tubaina-aj}, and
 
 In MetricMiner, we can notice that 47\% of the data is zero. It means that the heuristic
 presents a close approximation of the real coverage. Descriptive statistics also show the same: 
-the median of the distribution is 0, and the mean is 0.1149. The first quartile is 0, and the
+the median of the distribution is 0 and the mean is 0.1149. The first quartile is 0 and the
 third quartile is 0.2414.
 
-In Tubaina project, 62\% of the data is zero. The median is 0, and the mean is 0.0790. The first quartile is
-0, and the third quartile is 0.1667. 
-In Gnarus project, we can see that 61\% of the data is zero. The median is 0, the mean is -0.0152. The first quartile
-is 0, and the third quartile is 0.
+In Tubaina project, 62\% of the data is zero. The median is 0 and the mean is 0.0790. The first quartile is
+0 and the third quartile is 0.1667. 
+In Gnarus project, we can see that 61\% of the data is zero. The median is 0, the mean is -0.0152. The first quartile is 0 and the third quartile is 0.
 
 \begin{figure}[h!H]
   \centering
@@ -290,8 +263,8 @@ is 0, and the third quartile is 0.
   \label{fig:gnarus-aj}
 \end{figure}
 
-Based on the numbers we obtained, we believe that the heuristic has an acceptable performance. 
-In particular, if we look at the third quartile from all of them, we can notice that the number is
+Based on the numbers we obtained, we believe that the heuristic has an acceptable performance, depending on the study being conducted. 
+In particular, if we look at the third quartile for all projects, we can notice that the number is
 still small, indicating that the heuristic looks acceptable. Because of that,
 we decided to implement the metric using static analysis. 
 
@@ -299,15 +272,13 @@ we decided to implement the metric using static analysis.
 \section{Static Analysis}
 \label{sec-results}
 
-The next step of our work is to provide a more reliable view using static analysis. 
-We then implemented\footnote{https://github.com/mauricioaniche/gelato2} a static tool
-to calculate code coverage. It is known that static analysis will never achieve the same performance
-found in dynamic analysis: static analysis cannot deal with polymorphism and other concepts from object-orientation.
+We implemented\footnote{https://github.com/mauricioaniche/gelato2} a static tool
+to calculate code coverage. Static analysis misses some relations found in dynamic analysis, like those related to polymorphism.
 
 % Gustavo: consegue ver outra forma de descrever isso?
 In Figure \ref{fig:metricminer}, we show the histogram of the difference between Emma and our static approach to
 the MetricMiner project. By looking to this figure, one can notice that 63\% of the data is zero. 
-The median of the distribution is 0, and the mean is -0.1226. The first quartile is 0, and the
+The median of the distribution is 0 and the mean is -0.1226. The first quartile is 0 and the
 third quartile is also 0.
 
 \begin{figure}[h!H]
@@ -319,8 +290,8 @@ third quartile is also 0.
 
 In Figure \ref{fig:tubaina}, from Tubaina project, 45\% of the data is zero. 
 However, 48\% of the classes are between -0.2 and -1. Around 10\% are between -0.2 and -0.5.
-The median is -0.1603, and the mean is -0.3074. The first quartile is
--0.6, and the third quartile is 0.
+The median is -0.1603 and the mean is -0.3074. The first quartile is
+-0.6 and the third quartile is 0.
 
 \begin{figure}[h!H]
   \centering
@@ -333,7 +304,7 @@ The median is -0.1603, and the mean is -0.3074. The first quartile is
 In Figure \ref{fig:gnarus}, from Gnarus project, we can see that the data are more varied as 
 compared to the previous cases. Only 27\% is zero. Around 50\% are between -0.5 and -1. 
 The median is also higher than the others: -0.3852. The mean is -0.3272. The first quartile
-is -0.5, and the third quartile is 0.
+is -0.5 and the third quartile is 0.
 
 \begin{figure}[h!H]
   \centering
@@ -342,36 +313,27 @@ is -0.5, and the third quartile is 0.
   \label{fig:gnarus}
 \end{figure}
 
-By looking to the numbers above, we notice that the implementation was good in the first project,
-in which the median was 0, regular in the second one, in which the median was -0.16. However,
-in the last project, the heuristic did not go well, as the median was -0.38.
+By looking at the numbers above, we notice that the implementation result was fairly good in the first project, in which the median was 0, regular in the second one, in which the median was -0.16, and worse in the last, as the median was -0.38.
 
-We decided to closely investigate why some classes had such a bad performance. We found out
-that our tool was not correctly interpreting a few expressions. As an example, 
+We decided to investigate why some classes had such a bad performance. We found out
+that our tool was not correctly interpreting some cases. As an example, 
 the current implementation does not identify inline invocations with lists, such
 as \textit{list.get(0).doX()}. In that case, the invocation of \textit{doX()} is not identified.
 
 % GUSTAVO: revisa e completa se achar necessario?
 Although there were a few implementation problems, we believe that this is a valid approach
-when mining repositories. The numbers showed, both from the proof of concept and from the
-static tool, that the heuristic is acceptable. We believe that, with some effort on the tool,
-we will be able to use it to analyse large sets of projects.
+when mining repositories. We believe that, with some effort on the tool,
+we will be able to use it to analyze large sets of projects.
 
 
 \section{Threats to Validity}
 \label{sec-threats}
 
-There are a few threats to the validity of this research. The first one is that the
-heuristic itself may not make sense. However, as shown in the proof of concept,
-the idea seems valid, as the numbers found were interesting.
-
-Our implementation
-still does not fully work: implementing a parser is not an easy task. However, as we showed, the 
+There are a few threats to the validity of this research. Our implementation still does not get all cases: implementing a parser is not an easy task. However, as we showed, the 
 heuristic itself seems valid.
 
 We only evaluated three projects that belong to the same company. It means that these projects
-follow basically the same structure, development, and testing rules. That may bias the results.
-In a future work, we should run the experiment in many different projects.
+follow basically the same structure, development, and testing rules. In a future work, we will run the experiment in many different projects.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Work}
@@ -381,11 +343,10 @@ Many studies discuss the importance of code coverage when analyzing code quality
 Sebastian \textit{et al.} \cite{sebastian} say that many software development practices and tools
 are based on this number. However, they argue that developers usually calculate it for a single
 version of the system, and perform analysis on future versions without recalculating the numbers.
-He shows that even relatively small modifications on the source code can affect the code coverage, 
-and the impact of the change on the metric is hard to predict.
+He shows that even relatively small modifications on the source code affect the code coverage, and the impact of the change on the metric is hard to predict.
 
 To the best of our knowledge, there is only one study that discusses the calculation of
-code coverage through static analysis. Tiago and Visser \cite{tiago} propose a
+code coverage by means of static analysis. Tiago and Visser \cite{tiago} propose a
 technique that uses slicing of static call graphs to estimate the
 dynamic test coverage. 
 In their approach, they define method coverage as the ratio between covered 
@@ -393,7 +354,7 @@ and defined methods per class. They showed that, at system level, the approach
 proved to be satisfactory. In package and class level, the difference between
 the real and the calculated coverage was small in most cases.
 
-This approach is slightly different from ours. We use McCabe's number to estimate the
+This approach is different from ours. We use McCabe's number to estimate the
 minimum number of tests that a class should have. We are also more interested on calculating
 code coverage at the class level (from which is possible to derive the system-level number). 
 
@@ -401,16 +362,10 @@ code coverage at the class level (from which is possible to derive the system-le
 \section{Conclusion and Future Work}
 \label{sec-conclusion}
 
-Code coverage is an important metric to analyze software maintenance and evolution. However, it is 
-not easy to be calculated, as most tools require compiled code. In this study, we conceived, implemented, 
-and evaluated a heuristic to calculate code coverage using static analysis. 
-\textbf{Apparently, our heuristic can be used in mining software repositories studies}, 
-as its results were similar to those produced by the popular code coverage tool Emma. 
+Code coverage is an important metric to analyze software maintenance and evolution. However, it is not easy to be calculated in large scale, as most tools require compiled code. In this study, we conceived and implemented a heuristic to calculate code coverage using static analysis. In the preliminary evaluation, it produced results similar to those produced by the popular code coverage tool Emma for two of the three projects analyzed. 
 
-As future work, we intend to fix existing bugs in our implementation in order to
-achieve better results. Once the desired level of performance is achieved, we intend to implement code coverage
-calculation at other levels of abstraction: method, package, and system. Finally, we also 
-envision running this same study on more projects from different companies and domains.
+As future work, we intend to improve our implementation in order to
+achieve better results. Once the desired level of performance is achieved, we intend to implement code coverage calculation at other levels of abstraction: method, package, and system. Finally, we also envision running this same study on more projects from different companies and domains.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -418,7 +373,7 @@ envision running this same study on more projects from different companies and d
 
 We thank \textit{Caelum Ensino e Inovação} for allowing us to run the study in its environment,
 as well as supporting the development of the tool. We also thank Gustavo Pinto, from UFPE, who
-gave us a valuable feedback on this text.
+gave us a valuable feedback on this text. We also thank NAWEB, CNPq, and FAPESP for their support. 
 
 \bibliographystyle{abbrv}
 \bibliography{sigproc}
